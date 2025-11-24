@@ -191,3 +191,73 @@ export async function userLeaderboard(req, res) {
         });
     }
 }
+
+export async function userEdit(req, res) {
+    try {
+        const { user_name, correct, wrong, points } = req.body;
+
+        let user = await User.findOne({ user_name });
+
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                message: "User not found",
+                output: null
+            })
+            return;
+        }
+
+        // Update score
+        user.score += points;
+
+        // Prevent negative score
+        if (user.score < 0) user.score = 0;
+
+        // Update stats
+        if (correct) {
+            user.total_correct_answer_count += 1;
+        } 
+        else if (wrong) {
+            user.total_wrong_answer_count += 1;
+        } 
+        else {
+            user.total_unattempted_count += 1;
+        }
+
+        user.total_match_count += 1;
+
+        // Update highest score
+        if (user.score > user.heighest_score) {
+            user.heighest_score = user.score;
+        }
+
+        // Level up logic
+        if (user.score >= 100 && user.level < 2) user.level = 2;
+        if (user.score >= 300 && user.level < 3) user.level = 3;
+        if (user.score >= 600 && user.level < 4) user.level = 4;
+        if (user.score >= 1000 && user.level < 5) user.level = 5;
+
+        await user.save();
+
+        const users = await User.find().sort({ score: -1 });
+
+        for (let i = 0; i < users.length; i++) {
+            users[i].rank = i + 1;
+            await users[i].save();
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "User data updated successfully",
+            output: user
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+            output: null
+        });
+    }
+}
