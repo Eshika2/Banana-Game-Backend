@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-export function userRegister(req, res) {
+export async function userRegister(req, res) {
     const user_name = req.body.user_name;
     const email = req.body.email;
     const password = req.body.password;
@@ -23,7 +23,7 @@ export function userRegister(req, res) {
         ]
     }).then(async (userExists) => {
         if (userExists) {
-            res.status(200).json({
+            res.status(409).json({
                 success: false,
                 message: "User already exists",
                 output: null
@@ -59,7 +59,7 @@ export function userRegister(req, res) {
     })
 }
 
-export function userLogin(req, res) {
+export async function userLogin(req, res) {
     const email = req.body.email;
     const password = req.body.password;
 
@@ -67,7 +67,7 @@ export function userLogin(req, res) {
         email: email
     }).then((user) => {
         if (user == null) {
-            res.status(200).json({
+            res.status(404).json({
                 success: false,
                 message: "User does not exist",
                 output: null
@@ -83,14 +83,15 @@ export function userLogin(req, res) {
                 }
                 // console.log(userData);
 
-                const token = jwt.sign(userData, "secretKey", {expiresIn : "1h"});
+                const token = jwt.sign(userData, process.env.JWT_KEY /*, {expiresIn : "1h"}*/);
 
                 res.status(200).json({
                     success: true,
                     message: "Login Successfull",
                     output: {
                         _id: user.id,
-                        token: token
+                        token: token,
+                        user_name: user.user_name
                     }
                 })       
             } else {
@@ -104,7 +105,7 @@ export function userLogin(req, res) {
     })
 }
 
-export function getAuthData(req, res) {
+export async function getAuthData(req, res) {
     if (req.user == null) {
         res.status(404).json({
             success: false,
