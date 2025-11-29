@@ -43,10 +43,6 @@ const userSchema = new mongoose.Schema({
         type : Number,
         default : 0
     },
-    total_unattempted_count : {
-        type : Number,
-        default : 0
-    },
     is_active : {
         type : Number,
         default : 1

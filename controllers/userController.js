@@ -139,7 +139,6 @@ export async function getAuthData(req, res) {
                     total_match_count: user.total_match_count,
                     total_correct_answer_count: user.total_correct_answer_count,
                     total_wrong_answer_count: user.total_wrong_answer_count,
-                    total_unattempted_count: user.total_unattempted_count,
                     is_active: user.is_active,
                     created_at: user.created_at,
                     updated_at: user.updated_at
@@ -160,8 +159,8 @@ export async function userLeaderboard(req, res) {
     }
 
     try {
-        const page = parseInt(req.body.page) || 1;
-        const limit = parseInt(req.body.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
         const skip = (page - 1) * limit;
 
         const users = await User.find({}, "user_name level rank score")
@@ -207,13 +206,10 @@ export async function userEdit(req, res) {
             return;
         }
 
-        // Update score
         user.score += points;
 
-        // Prevent negative score
         if (user.score < 0) user.score = 0;
 
-        // Update stats
         if (correct) {
             user.total_correct_answer_count += 1;
         } 
@@ -226,16 +222,19 @@ export async function userEdit(req, res) {
 
         user.total_match_count += 1;
 
-        // Update highest score
         if (user.score > user.heighest_score) {
             user.heighest_score = user.score;
         }
 
-        // Level up logic
         if (user.score >= 100 && user.level < 2) user.level = 2;
-        if (user.score >= 300 && user.level < 3) user.level = 3;
-        if (user.score >= 600 && user.level < 4) user.level = 4;
-        if (user.score >= 1000 && user.level < 5) user.level = 5;
+        if (user.score >= 200 && user.level < 3) user.level = 3;
+        if (user.score >= 300 && user.level < 4) user.level = 4;
+        if (user.score >= 500 && user.level < 5) user.level = 5;
+        if (user.score >= 600 && user.level < 6) user.level = 6;
+        if (user.score >= 700 && user.level < 7) user.level = 7;
+        if (user.score >= 800 && user.level < 8) user.level = 8;
+        if (user.score >= 900 && user.level < 9) user.level = 9;
+        if (user.score >= 1000 && user.level < 10) user.level = 10;
 
         await user.save();
 
