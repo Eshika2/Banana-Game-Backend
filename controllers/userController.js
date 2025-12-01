@@ -324,3 +324,61 @@ export async function userEdit(req, res) {
         });
     }
 }
+
+export async function userPasswordReset(req, res) {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        const otp = req.body.otp;
+
+        const lastOtpData = await EmailConfirmation.findOne({ 
+            email: email
+        }).sort({ created_at : -1 })
+
+        console.log(lastOtpData);
+
+        if (lastOtpData == null) {
+            res.status(404).json({
+                success: false,
+                message: "No OTP found for this email",
+                output: null
+            })
+            return;
+        }
+
+        if (lastOtpData.otp != otp) {
+            res.status(404).json({
+                success: false,
+                message: "Invalid OTP",
+                output: null
+            })
+            return;
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        await User.updateOne({
+            email: email
+        }, {
+            password: hashedPassword
+        });
+        
+        await EmailConfirmation.deleteMany({
+            email: email
+        });
+        
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully",
+            output: null
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+            output: null
+        });
+    }
+}
