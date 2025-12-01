@@ -13,12 +13,11 @@ dotenv.config();
 mongoose.connect(process.env.MONGO_URL).then(
     ()=>{
         console.log('Connected to Database');
-    }
-).catch(
-    ()=>{
-        console.log('Connection to Database failed');
-    }
-)
+    }).catch(
+        ()=>{
+            console.log('Connection to Database failed');
+        }
+    );
 
 app.use(bodyParser.json());
 app.use(cors());

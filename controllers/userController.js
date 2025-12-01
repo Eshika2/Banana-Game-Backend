@@ -1,6 +1,70 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import nodemailer from "nodemailer";
+import EmailConfirmation from "../models/emailConfirmation.js";
+
+dotenv.config();
+
+const transport = nodemailer.createTransport({
+    service: "gmail",
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    secure: false,
+    auth: {
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD
+    }
+});
+
+export async function sendOTP(req, res) {
+    try {
+        const email = req.body.email;
+        const otp = Math.floor(Math.random() * 90000) + 10000;
+
+        const message = {
+            from : process.env.MAIL_FROM_ADDRESS,
+            to : email,
+            subject : "OTP for Password Reset",
+            text : "Your OTP for Password Reset is " + otp
+        }
+
+        const newOTP = new EmailConfirmation({
+            email : email,
+            otp : otp
+        });
+
+        newOTP.save().then(()=>{
+            console.log("OTP saved successfully");
+        })
+
+        transport.sendMail(message, (error, info) => {
+            if (error) {
+                console.error(error);
+                res.status(500).json({
+                    success: false,
+                    message: "Something went wrong",
+                    output: null
+                });
+            } else {
+                res.status(200).json({
+                    success: true,
+                    message: "OTP sent successfully",
+                    output: null
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+            output: null
+        });
+    }
+}
 
 export async function userRegister(req, res) {
     const user_name = req.body.user_name;
