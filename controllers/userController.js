@@ -23,6 +23,17 @@ export async function sendOTP(req, res) {
         const email = req.body.email;
         const otp = Math.floor(Math.random() * 90000) + 10000;
 
+        const user = await User.findOne({ email: email });
+
+        if (user == null) {
+            res.status(404).json({
+                success: false,
+                message: "User does not exist. Please register first",
+                output: null
+            })
+            return;
+        }
+
         const message = {
             from : process.env.MAIL_FROM_ADDRESS,
             to : email,
@@ -279,9 +290,6 @@ export async function userEdit(req, res) {
         } 
         else if (wrong) {
             user.total_wrong_answer_count += 1;
-        } 
-        else {
-            user.total_unattempted_count += 1;
         }
 
         user.total_match_count += 1;
@@ -331,11 +339,20 @@ export async function userPasswordReset(req, res) {
         const password = req.body.password;
         const otp = req.body.otp;
 
+        if (email == null || password == null || otp == null) {
+            res.status(404).json({
+                success: false,
+                message: "Email, password or OTP cannot be null",
+                output: null
+            })
+            return;
+        }
+
         const lastOtpData = await EmailConfirmation.findOne({ 
             email: email
         }).sort({ created_at : -1 })
 
-        console.log(lastOtpData);
+        // console.log(lastOtpData);
 
         if (lastOtpData == null) {
             res.status(404).json({
